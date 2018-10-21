@@ -4,7 +4,6 @@
 
 #include "strset.h"
 
-namespace jnp1 {
 #ifndef NDEBUG 
     const bool debug = true;
 #else 
@@ -26,5 +25,4 @@ extern "C" unsigned long strset42() {
         strset_insert(strset42_id, "42");
     }
     return strset42_id;
-}
 }

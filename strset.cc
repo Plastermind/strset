@@ -5,8 +5,6 @@
 
 #include "strsetconst.h"
 
-namespace jnp1 {
-
 #ifndef NDEBUG 
     const bool debug = true;
 #else 
@@ -145,6 +143,5 @@ extern "C" int strset_comp(unsigned long id1, unsigned long id2) {
     if (strset1 < strset2) return -1;
     else if (strset1 > strset2) return 1;
     else return 0;
-}
 }
 
