@@ -6,7 +6,7 @@
 
 int main() {
     unsigned long s1, s2, s3;
-
+    
     s1 = strset_new();
     strset_insert(s1, "foo");
     assert(strset_test(s1, "foo"));
