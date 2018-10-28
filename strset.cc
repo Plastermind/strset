@@ -183,7 +183,7 @@ namespace jnp1 {
     //Tworzy nowy zbiór i zwraca jego identyfikator.
     unsigned long strset_new() {
         Command_data data = {{"new", 0}, {0, nullptr}};
-	    print_info(data);
+        print_info(data);
 	
         ++strsets_number();
         strsets_container().resize(strsets_number() + 1);
@@ -193,7 +193,6 @@ namespace jnp1 {
         
         print_result(data, 1);
         return strsets_number();
-        //return 1;
     }
         
     //Jeżeli istnieje zbiór o identyfikatorze id, usuwa go, a w przeciwnym
@@ -325,9 +324,9 @@ namespace jnp1 {
         else if (strset1 > strset2) result = 1;
         
         print_result(data, result);
-	    check_id(data);
-	    std::swap(data.first.second, data.second.first);
-	    check_id(data);
+        check_id(data);
+        std::swap(data.first.second, data.second.first);
+        check_id(data);
 
         return result;
     }
