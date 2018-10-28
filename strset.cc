@@ -183,7 +183,7 @@ namespace jnp1 {
     //Tworzy nowy zbiór i zwraca jego identyfikator.
     unsigned long strset_new() {
         Command_data data = {{"new", 0}, {0, nullptr}};
-	print_info(data);
+	    print_info(data);
 	
         ++strsets_number();
         strsets_container().resize(strsets_number() + 1);
@@ -216,10 +216,8 @@ namespace jnp1 {
         Command_data data = {{"size", id}, {0, nullptr}};
         print_info(data);
         
-        int result;
-        
+        int result = 0;
         if (strset_exist(id)) result = strsets_container()[id].size();
-        else result = 0;
         
         print_result(data, result);
         
@@ -322,14 +320,14 @@ namespace jnp1 {
         if (strset_exist(id1)) strset1 = strsets_container()[id1];
         if (strset_exist(id2)) strset2 = strsets_container()[id2];
 
-	int result = 0;
+	    int result = 0;
         if (strset1 < strset2) result = -1;
         else if (strset1 > strset2) result = 1;
         
         print_result(data, result);
-	check_id(data);
-	std::swap(data.first.second, data.second.first);
-	check_id(data);
+	    check_id(data);
+	    std::swap(data.first.second, data.second.first);
+	    check_id(data);
 
         return result;
     }
