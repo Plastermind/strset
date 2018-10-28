@@ -15,6 +15,10 @@ using Strset = std::set<std::string>;
 using StrsetsContainer = std::vector<Strset>;
 using IdsOccupation = std::vector<bool>;
 using Strset_id = unsigned long;
+using Command_name = std::string;
+using Value = const char*;
+using Command_data = std::pair<std::pair<Command_name, Strset_id>,
+      			std::pair<Strset_id, Value>>;
 
 // AUXILIARY FUNCTIONS
 
@@ -40,8 +44,11 @@ bool strset_exist(unsigned long id) {
     return strsets_number() >= id && ids_occupation()[id];
 }
 
-void print_info(std::string name, Strset_id id1, Strset_id id2, const char* value) {
+void print_info(Command_data data) {
     if (!debug) return;
+    
+    auto [name, id1] = data.first;
+    auto [id2, value] = data.second;
 
     std::string info = "strset_" + name + "(";
     
@@ -62,9 +69,12 @@ void print_info(std::string name, Strset_id id1, Strset_id id2, const char* valu
     std::cerr << info << std::endl;
 }  
 
-void print_result(std::string name, Strset_id id1, Strset_id id2, const char* value, int result) {
+void print_result(Command_data command_data, int result) {
     if (!debug) return;
-    
+
+    auto [name, id1] = command_data.first;
+    auto [id2, value] = command_data.second;
+
     std::string set1_name = 
         (id1 && id1 == jnp1::strset42() ? "the 42 Set" : "set " + std::to_string(id1));
     std::string set2_name = 
@@ -107,12 +117,14 @@ void print_result(std::string name, Strset_id id1, Strset_id id2, const char* va
 }
 
 
-bool check_id(std::string command_name, unsigned long id) {
+bool check_id(Command_data command_data) {
+    auto [command_name, id] = command_data.first;
+
     bool result = strset_exist(id);
     
     if (!result) {
         initialize_stream();
-        std::string error = "strset_" + command_name + ": set" + std::to_string(id)
+        std::string error = "strset_" + command_name + ": set " + std::to_string(id)
                             + " does not exist";
         std::cerr << error << std::endl;
     }
@@ -120,7 +132,10 @@ bool check_id(std::string command_name, unsigned long id) {
     return result;
 }
 
-bool check_value(std::string command_name, const char *value) {
+bool check_value(Command_data command_data) {
+    std::string command_name = command_data.first.first;
+    const char* value = command_data.second.second;
+
     bool result = value != nullptr;
     
     if (!result) {
@@ -132,7 +147,9 @@ bool check_value(std::string command_name, const char *value) {
     return result;    
 }
 
-bool check_set42(std::string command_name, unsigned long id) {
+bool check_set42(Command_data command_data) {
+    auto [command_name, id] = command_data.first;
+
     if (id == jnp1::strset42()) {
         if (debug) {
             std::string error = "strset_" + command_name + ": attempt to ";
@@ -165,14 +182,16 @@ namespace jnp1 {
 
     //Tworzy nowy zbiór i zwraca jego identyfikator.
     unsigned long strset_new() {
-        print_info("new", 0, 0, nullptr);
+        Command_data data = {{"new", 0}, {0, nullptr}};
+	print_info(data);
+	
         ++strsets_number();
         strsets_container().resize(strsets_number() + 1);
         ids_occupation().resize(strsets_number() + 1);
         
         ids_occupation().back() = 1;
         
-        print_result("new", 0, 0, nullptr, 1);
+        print_result(data, 1);
         return strsets_number();
         //return 1;
     }
@@ -180,27 +199,29 @@ namespace jnp1 {
     //Jeżeli istnieje zbiór o identyfikatorze id, usuwa go, a w przeciwnym
     //przypadku nie robi nic.
     void strset_delete(unsigned long id) {
-        print_info("delete", id, 0, nullptr);
-        
-        bool is_query_correct = check_id("delete", id) && !check_set42("delete", id);
+        Command_data data = {{"delete", id}, {0, nullptr}};
+        print_info(data);
+
+        bool is_query_correct = check_id(data) && !check_set42(data);
          
         if (is_query_correct) {
             ids_occupation()[id] = false;
-            print_result("delete", id, 0, nullptr, 1);
+            print_result(data, 1);
         }
     }
 
     //Jeżeli istnieje zbiór o identyfikatorze id, zwraca liczbę jego elementów,
     //a w przeciwnym przypadku zwraca 0.      
     size_t strset_size(unsigned long id) {
-        print_info("size", id, 0, nullptr);
+        Command_data data = {{"size", id}, {0, nullptr}};
+        print_info(data);
         
         int result;
         
         if (strset_exist(id)) result = strsets_container()[id].size();
         else result = 0;
         
-        print_result("size", id, 0, nullptr, result);
+        print_result(data, result);
         
         return result;
     }
@@ -209,35 +230,38 @@ namespace jnp1 {
     //tego zbioru, to dodaje element do zbioru, a w przeciwnym przypadku nie
     //robi nic.
     void strset_insert(unsigned long id, const char* value) {
-        print_info("insert", id, 0, value);
-        bool is_query_correct = check_value("insert", value) 
-                                && check_id("insert", id);
+        Command_data data = {{"insert", id}, {0, value}};
+        print_info(data);
+
+        bool is_query_correct = check_value(data) 
+                                && check_id(data);
         if (!is_query_correct) return;
         
         if (strsets_container()[id].empty()) {
             strsets_container()[id].insert(std::string(value));
         }
         else {
-            if (!check_set42("insert", id)) {
+            if (!check_set42(data)) {
                 strsets_container()[id].insert(std::string(value));
             } 
             else return;
         }
         
-        print_result("insert", id, 0, value, 1);
+        print_result(data, 1);
     }
 
     //Jeżeli istnieje zbiór o identyfikatorze id i element value należy do tego
     //zbioru, to zwraca 1, a w przeciwnym przypadku 0.
     int strset_test(unsigned long id, const char* value) {
-        print_info("test", id, 0, value);
+        Command_data data = {{"test", id}, {0, value}};
+        print_info(data);
         
-        bool is_query_correct = check_id("test", id) &&
-                                check_value("test", value);
+        bool is_query_correct = check_id(data) &&
+                                check_value(data);
         if (!is_query_correct) return 0;
         
         int result = strsets_container()[id].count(std::string(value));
-        print_result("test", id, 0, value, result);
+        print_result(data, result);
         
         return result;
     }
@@ -245,11 +269,12 @@ namespace jnp1 {
     //Jeżeli istnieje zbiór o identyfikatorze id i element value należy do tego
     //zbioru, to usuwa element ze zbioru, a w przeciwnym przypadku nie robi nic.
     void strset_remove(unsigned long id, const char* value) {
-        print_info("remove", id, 0, value);
+        Command_data data = {{"remove", id}, {0, value}};
+        print_info(data);
         
-        bool is_query_correct = check_value("remove", value) &&
-                                check_id("remove", id) && 
-                                !check_set42("remove", id);
+        bool is_query_correct = check_value(data) &&
+                                check_id(data) && 
+                                !check_set42(data);
                                 
         if (!is_query_correct) return;
         
@@ -260,21 +285,22 @@ namespace jnp1 {
             strsets_container()[id].erase(std::string(value));
         } 
         
-        print_result("remove", id, 0, value, result);
+        print_result(data, result);
     }
 
     //Jeżeli istnieje zbiór o identyfikatorze id, usuwa wszystkie jego elementy,
     //a w przeciwnym przypadku nie robi nic.
     void strset_clear(unsigned long id) {
-        print_info("clear", id, 0, nullptr);
+        Command_data data = {{"clear", id}, {0, nullptr}};
+        print_info(data);
         
-        bool is_query_correct = check_id("remove", id) && 
-                                !check_set42("remove", id);
+        bool is_query_correct = check_id(data) && 
+                                !check_set42(data);
         if (!is_query_correct) return;
         
         strsets_container()[id].clear();
         
-        print_result("clear", id, 0, nullptr, 1);
+        print_result(data, 1);
     }
 
     //Porównuje zbiory o identyfikatorach id1 i id2. Niech sorted(id) oznacza
@@ -288,17 +314,23 @@ namespace jnp1 {
     //Jeżeli zbiór o którymś z identyfikatorów nie istnieje, to jest traktowany
     //jako równy zbiorowi pustemu.
     int strset_comp(unsigned long id1, unsigned long id2) {
-        print_info("comp", id1, id2, nullptr);
+        Command_data data = {{"comp", id1}, {id2, nullptr}};
+        print_info(data);
+
         Strset strset1, strset2;
         
         if (strset_exist(id1)) strset1 = strsets_container()[id1];
         if (strset_exist(id2)) strset2 = strsets_container()[id2];
-        
-        int result = 0;
+
+	int result = 0;
         if (strset1 < strset2) result = -1;
         else if (strset1 > strset2) result = 1;
         
-        print_result("comp", id1, id2, nullptr, result);
+        print_result(data, result);
+	check_id(data);
+	std::swap(data.first.second, data.second.first);
+	check_id(data);
+
         return result;
     }
 

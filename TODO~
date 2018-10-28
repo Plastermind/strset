@@ -3,4 +3,6 @@ TRZEBA:
 2. pamiętać, żeby na koniec zmienić true/false w debugu
 3. Poczyścić kod przed wysłaniem - usunąć niepotrzebne komentarze, includy, zamienić taby na spacje
 MOŻNA:
+1. zamiast 5 argumentów do funkcji zrobić jakąś parę par i ją ładnie opisać
 2. zadbać, żeby funkcje pomocnicze nie były widoczne na zewnątrz (nie wiem, czy konieczne i nie wiem jak to zrobić za bardzo)
+3. w funkcji comp wypisywać info, że sety są puste
