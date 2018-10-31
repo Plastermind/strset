@@ -1,4 +1,4 @@
 TRZEBA:
 1. dodać kilka komentarzy przy pomocniczych funkcjach
 2. pamiętać, żeby na koniec zmienić true/false w debugu
-3. Poczyścić kod przed wysłaniem - usunąć niepotrzebne includy, zamienić taby na spacje
+3. Poczyścić kod przed wysłaniem - usunąć niepotrzebne includy

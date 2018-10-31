@@ -1,11 +1,11 @@
 #ifndef _STRSET_H_
 #define _STRSET_H_
 
-#include <stdio.h> 
+#include <stdio.h>
 
 #ifdef __cplusplus
 namespace jnp1 {
-extern "C" {    
+extern "C" {
 #endif // __cplusplus
 
 
@@ -16,7 +16,7 @@ unsigned long strset_new();
 void strset_delete(unsigned long id);
 
 // Jeżeli istnieje zbiór o identyfikatorze id, zwraca liczbę jego elementów,
-// a w przeciwnym przypadku zwraca 0.  
+// a w przeciwnym przypadku zwraca 0.
 size_t strset_size(unsigned long id);
 
 // Jeżeli istnieje zbiór o identyfikatorze id i element value nie należy do

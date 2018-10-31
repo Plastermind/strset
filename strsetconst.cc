@@ -2,29 +2,29 @@
 
 #include "strset.h"
 #include "strsetconst.h"
-    
-#ifndef NDEBUG 
+
+#ifndef NDEBUG
     const bool debug = true;
-#else 
+#else
     const bool debug = false;
 #endif
 
 namespace jnp1 {
-	
+
 
 namespace {
     static unsigned long strset42_id = 0;
 
     void print_info() {
         if (!debug) return;
-        
+
         std::ios_base::Init();
         std::cerr << "strsetconst init invoked" << std::endl;
     }
 
     void print_result() {
         if (!debug) return;
-        
+
         std::ios_base::Init();
         std::cerr << "strsetconst init finished" << std::endl;
     }
@@ -37,7 +37,7 @@ unsigned long strset42() {
         strset_insert(strset42_id, "42");
         print_result();
     }
-        
+
     return strset42_id;
 }
 
