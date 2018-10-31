@@ -15,189 +15,189 @@
     
 namespace jnp1 {
 
-    using Strset = std::set<std::string>;
-    using Strsets_container = std::vector<Strset>;
-    using Ids_occupation = std::vector<bool>;
-    using Strset_id = unsigned long;
+using Strset = std::set<std::string>;
+using Strsets_container = std::vector<Strset>;
+using Ids_occupation = std::vector<bool>;
+using Strset_id = unsigned long;
 
 namespace {
-    enum Command_type {NEW, DELETE, INSERT, REMOVE, TEST, SIZE, CLEAR, COMP};
-    
-    unsigned long strsets_number;
+enum Command_type {NEW, DELETE, INSERT, REMOVE, TEST, SIZE, CLEAR, COMP};
 
-    std::string get_command_name(Command_type type) {
-        static std::string names[] = 
-        {"new", "delete", "insert", "remove", "test", "size", "clear", "comp"};
-        
-        return names[type];
-    }
-    
-    // Meyer's singletons to prevent static initialization order problem
-    Strsets_container& strsets_container() {
-        static Strsets_container strsets_container;
-        return strsets_container;
-    }
-    
-    Ids_occupation& ids_occupation() {
-        static Ids_occupation ids_occupation;
-        return ids_occupation;
-    }
-    
-    void initialize_stream() {
-        std::ios_base::Init();
-    }
-    
-    bool strset_exist(unsigned long id) {
-        return strsets_number >= id && ids_occupation()[id];
-    }
+unsigned long strsets_number;
 
-    // prints on diagnostic output name of the command and values    of its arguments
-    void print_info(Command_type type, ...) {
-        if (!debug) return;
+std::string get_command_name(Command_type type) {
+    static std::string names[] = 
+    {"new", "delete", "insert", "remove", "test", "size", "clear", "comp"};
+    
+    return names[type];
+}
 
-        va_list args;
-        va_start(args, type);
-        
-        std::string info = "strset_" + get_command_name(type) + "(";
-        const char* value;
-        
-        switch (type) {
-            case DELETE:
-            case SIZE: 
-            case CLEAR: 
-                info += std::to_string(va_arg(args, Strset_id));
-                break;
-            case INSERT:
-            case REMOVE:
-            case TEST:
-                info += std::to_string(va_arg(args, Strset_id)) + ", ";
-                value = va_arg(args, const char*);
-                info += (value == nullptr ? "NULL" : "\"" + std::string(value) + "\"");
-                break;
-            case COMP:
-                info += std::to_string(va_arg(args, Strset_id)) + ", ";
-                info += std::to_string(va_arg(args, Strset_id));
-                break;
-            case NEW:
-                break;
-        }
-        info += ")";
-        
-        va_end(args);
+// Meyer's singletons to prevent static initialization order problem
+Strsets_container& strsets_container() {
+    static Strsets_container strsets_container;
+    return strsets_container;
+}
 
+Ids_occupation& ids_occupation() {
+    static Ids_occupation ids_occupation;
+    return ids_occupation;
+}
+
+void initialize_stream() {
+    std::ios_base::Init();
+}
+
+bool strset_exist(unsigned long id) {
+    return strsets_number >= id && ids_occupation()[id];
+}
+
+// prints on diagnostic output name of the command and values    of its arguments
+void print_info(Command_type type, ...) {
+    if (!debug) return;
+
+    va_list args;
+    va_start(args, type);
+    
+    std::string info = "strset_" + get_command_name(type) + "(";
+    const char* value;
+    
+    switch (type) {
+        case DELETE:
+        case SIZE: 
+        case CLEAR: 
+            info += std::to_string(va_arg(args, Strset_id));
+            break;
+        case INSERT:
+        case REMOVE:
+        case TEST:
+            info += std::to_string(va_arg(args, Strset_id)) + ", ";
+            value = va_arg(args, const char*);
+            info += (value == nullptr ? "NULL" : "\"" + std::string(value) + "\"");
+            break;
+        case COMP:
+            info += std::to_string(va_arg(args, Strset_id)) + ", ";
+            info += std::to_string(va_arg(args, Strset_id));
+            break;
+        case NEW:
+            break;
+    }
+    info += ")";
+    
+    va_end(args);
+
+    initialize_stream();
+    std::cerr << info << std::endl;
+}
+
+// pritnts on diagnostic output outcome of the command
+void print_result(Command_type type, ...) {
+    if (!debug) return;
+    
+    va_list args;
+    va_start(args, type);
+    
+    std::string info = "strset_" + get_command_name(type) + ": ";
+
+    switch (type) {
+        case NEW: 
+            info += "set " + std::to_string(va_arg(args, int)) + " created";
+            break;
+        case DELETE: 
+            info += "set " + std::to_string(va_arg(args, int)) + " deleted";
+            break;
+        case INSERT:
+            info += "element \"" + std::string(va_arg(args, char*)) + "\" ";
+            info += (va_arg(args, int) ? "inserted" : "was already present");
+            break;
+        case REMOVE: 
+            info += "element " + std::string(va_arg(args, char*)) + " ";
+            info += (va_arg(args, int) ? "removed" : "was not present");
+            break;
+        case SIZE:
+            info += "set " + std::to_string(va_arg(args, Strset_id)) + " contains ";
+            info += std::to_string(va_arg(args, int)) + " element(s)";
+            break;
+        case TEST:
+            info += "set " + std::to_string(va_arg(args, int)) + " ";
+            info += (va_arg(args, int) ? "contains" : "does not contain");
+            info += " the element \"" + std::string(va_arg(args, char*)) + "\"";
+            break;
+        case CLEAR:
+            info += "set " + std::to_string(va_arg(args, Strset_id)) + " cleared";
+            break;
+        case COMP:
+            info += "result of comparing set " + std::to_string(va_arg(args, int));
+            info += " to set " + std::to_string(va_arg(args, int));
+            info += " is " + std::to_string(va_arg(args, int));
+            break;
+    }
+    
+    va_end(args);
+    
+    initialize_stream();
+    std::cerr << info << std::endl;
+}
+
+// checks if id is valid and prints error if necessary 
+bool check_id(Command_type type, Strset_id id) {
+    bool result = strset_exist(id);
+
+    if (!result && debug) {
         initialize_stream();
-        std::cerr << info << std::endl;
+        std::string error = "strset_" + get_command_name(type) + ": set " 
+                            + std::to_string(id) + " does not exist";
+        std::cerr << error << std::endl;
     }
 
-    // pritnts on diagnostic output outcome of the command
-    void print_result(Command_type type, ...) {
-        if (!debug) return;
-        
-        va_list args;
-        va_start(args, type);
-        
-        std::string info = "strset_" + get_command_name(type) + ": ";
+    return result;
+}
 
-        switch (type) {
-            case NEW: 
-                info += "set " + std::to_string(va_arg(args, int)) + " created";
-                break;
-            case DELETE: 
-                info += "set " + std::to_string(va_arg(args, int)) + " deleted";
-                break;
+// checks if value is valid and prints error if necessary
+bool check_value(Command_type type, const char* value) {
+    bool result = value != nullptr;
+
+    if (!result && debug) {
+        initialize_stream();
+        std::string error = "strset_" + get_command_name(type)
+                        + ": invalid value (NULL)";
+        std::cerr << error << std::endl;
+    } 
+    return result;
+}
+
+// checks if the given set is The 42 Set and prints error if necessary
+bool check_set42(Command_type type, Strset_id id) {
+    if (id == jnp1::strset42()) {
+        if (debug) {
+            std::string error = "strset_" + get_command_name(type) + ": attempt to ";
+            
+            switch (type) {
             case INSERT:
-                info += "element \"" + std::string(va_arg(args, char*)) + "\" ";
-                info += (va_arg(args, int) ? "inserted" : "was already present");
+                error += "insert into the 42 set";
                 break;
-            case REMOVE: 
-                info += "element " + std::string(va_arg(args, char*)) + " ";
-                info += (va_arg(args, int) ? "removed" : "was not present");
-                break;
-            case SIZE:
-                info += "set " + std::to_string(va_arg(args, Strset_id)) + " contains ";
-                info += std::to_string(va_arg(args, int)) + " element(s)";
-                break;
-            case TEST:
-                info += "set " + std::to_string(va_arg(args, int)) + " ";
-                info += (va_arg(args, int) ? "contains" : "does not contain");
-                info += " the element \"" + std::string(va_arg(args, char*)) + "\"";
+            case REMOVE:
+                error += "remove element from the 42 set";
                 break;
             case CLEAR:
-                info += "set " + std::to_string(va_arg(args, Strset_id)) + " cleared";
+                error += "clear the 42 set";
                 break;
-            case COMP:
-                info += "result of comparing set " + std::to_string(va_arg(args, int));
-                info += " to set " + std::to_string(va_arg(args, int));
-                info += " is " + std::to_string(va_arg(args, int));
+            case DELETE:
+                error += "delete the 42 set";
                 break;
-        }
-        
-        va_end(args);
-        
-        initialize_stream();
-        std::cerr << info << std::endl;
-    }
-
-    // checks if id is valid and prints error if necessary 
-    bool check_id(Command_type type, Strset_id id) {
-        bool result = strset_exist(id);
-
-        if (!result && debug) {
-            initialize_stream();
-            std::string error = "strset_" + get_command_name(type) + ": set " 
-                                + std::to_string(id) + " does not exist";
-            std::cerr << error << std::endl;
-        }
-
-        return result;
-    }
-    
-    // checks if value is valid and prints error if necessary
-    bool check_value(Command_type type, const char* value) {
-        bool result = value != nullptr;
-
-        if (!result && debug) {
-            initialize_stream();
-            std::string error = "strset_" + get_command_name(type)
-                            + ": invalid value (NULL)";
-            std::cerr << error << std::endl;
-        } 
-        return result;
-    }
-
-    // checks if the given set is The 42 Set and prints error if necessary
-    bool check_set42(Command_type type, Strset_id id) {
-        if (id == jnp1::strset42()) {
-            if (debug) {
-                std::string error = "strset_" + get_command_name(type) + ": attempt to ";
-                
-                switch (type) {
-                case INSERT:
-                    error += "insert into the 42 set";
-                    break;
-                case REMOVE:
-                    error += "remove element from the 42 set";
-                    break;
-                case CLEAR:
-                    error += "clear the 42 set";
-                    break;
-                case DELETE:
-                    error += "delete the 42 set";
-                    break;
-                default:
-                    break;
-                }
-                
-                initialize_stream();
-                std::cerr << error << std::endl;
+            default:
+                break;
             }
-
-            return true;
+            
+            initialize_stream();
+            std::cerr << error << std::endl;
         }
 
-        return false;
+        return true;
     }
-} // namespace
+
+    return false;
+}
+} // end of anonynous namespace
 
 unsigned long strset_new() {
     print_info(NEW);
