@@ -12,6 +12,9 @@
     const bool debug = false;
 #endif
 
+namespace jnp1 {
+
+
 using Strset = std::set<std::string>;
 using StrsetsContainer = std::vector<Strset>;
 using IdsOccupation = std::vector<bool>;
@@ -21,7 +24,6 @@ using Value = const char*;
 using Command_data = std::pair<std::pair<Command_name, Strset_id>,
       			std::pair<Strset_id, Value>>;
 
-// AUXILIARY FUNCTIONS
 namespace {
     unsigned long strsets_number;
 
@@ -177,133 +179,134 @@ namespace {
         
         return false;
     }
-}
-// STRSET FUNCTIONS
-namespace jnp1 {
-    unsigned long strset_new() {
-        Command_data data = {{"new", 0}, {0, nullptr}};
-        print_info(data);
+} // namespace
+
+unsigned long strset_new() {
+	Command_data data = {{"new", 0}, {0, nullptr}};
+	print_info(data);
+
+	++strsets_number;
+	strsets_container().resize(strsets_number + 1);
+	ids_occupation().resize(strsets_number + 1);
 	
-        ++strsets_number;
-        strsets_container().resize(strsets_number + 1);
-        ids_occupation().resize(strsets_number + 1);
-        
-        ids_occupation().back() = 1;
-        
-        print_result(data, 1);
-        return strsets_number;
-    }
-        
-    void strset_delete(unsigned long id) {
-        Command_data data = {{"delete", id}, {0, nullptr}};
-        print_info(data);
-
-        bool is_query_correct = check_id(data) && !check_set42(data);
-         
-        if (is_query_correct) {
-            ids_occupation()[id] = false;
-            print_result(data, 1);
-        }
-    }
-    
-    size_t strset_size(unsigned long id) {
-        Command_data data = {{"size", id}, {0, nullptr}};
-        print_info(data);
-        
-        int result = 0;
-        if (strset_exist(id)) result = strsets_container()[id].size();
-        
-        print_result(data, result);
-        
-        return result;
-    }
-
-    void strset_insert(unsigned long id, const char* value) {
-        Command_data data = {{"insert", id}, {0, value}};
-        print_info(data);
-
-        bool is_query_correct = check_value(data) 
-                                && check_id(data);
-        if (!is_query_correct) return;
-        
-        if (strsets_container()[id].empty()) {
-            strsets_container()[id].insert(std::string(value));
-        }
-        else {
-            if (!check_set42(data)) {
-                strsets_container()[id].insert(std::string(value));
-            } 
-            else return;
-        }
-        
-        print_result(data, 1);
-    }
-
-    int strset_test(unsigned long id, const char* value) {
-        Command_data data = {{"test", id}, {0, value}};
-        print_info(data);
-        
-        bool is_query_correct = check_id(data) &&
-                                check_value(data);
-        if (!is_query_correct) return 0;
-        
-        int result = strsets_container()[id].count(std::string(value));
-        print_result(data, result);
-        
-        return result;
-    }
-
-    void strset_remove(unsigned long id, const char* value) {
-        Command_data data = {{"remove", id}, {0, value}};
-        print_info(data);
-        
-        bool is_query_correct = check_value(data) &&
-                                check_id(data) && 
-                                !check_set42(data);
-                                
-        if (!is_query_correct) return;
-        
-        bool result = false;
-        
-        if (strset_test(id, value)) {
-            result = true;
-            strsets_container()[id].erase(std::string(value));
-        } 
-        
-        print_result(data, result);
-    }
-
-    void strset_clear(unsigned long id) {
-        Command_data data = {{"clear", id}, {0, nullptr}};
-        print_info(data);
-        
-        bool is_query_correct = check_id(data) && 
-                                !check_set42(data);
-        if (!is_query_correct) return;
-        
-        strsets_container()[id].clear();
-        
-        print_result(data, 1);
-    }
-
-    int strset_comp(unsigned long id1, unsigned long id2) {
-        Command_data data = {{"comp", id1}, {id2, nullptr}};
-        print_info(data);
-
-        Strset strset1, strset2;
-        
-        if (strset_exist(id1)) strset1 = strsets_container()[id1];
-        if (strset_exist(id2)) strset2 = strsets_container()[id2];
-
-	    int result = 0;
-        if (strset1 < strset2) result = -1;
-        else if (strset1 > strset2) result = 1;
-        
-        print_result(data, result);
-        check_id(data);
-        std::swap(data.first.second, data.second.first);
-        check_id(data);
-
-        return result;
-    }
+	ids_occupation().back() = 1;
+	
+	print_result(data, 1);
+	return strsets_number;
 }
+	
+void strset_delete(unsigned long id) {
+	Command_data data = {{"delete", id}, {0, nullptr}};
+	print_info(data);
+
+	bool is_query_correct = check_id(data) && !check_set42(data);
+	 
+	if (is_query_correct) {
+		ids_occupation()[id] = false;
+		print_result(data, 1);
+	}
+}
+
+size_t strset_size(unsigned long id) {
+	Command_data data = {{"size", id}, {0, nullptr}};
+	print_info(data);
+	
+	int result = 0;
+	if (strset_exist(id)) result = strsets_container()[id].size();
+	
+	print_result(data, result);
+	
+	return result;
+}
+
+void strset_insert(unsigned long id, const char* value) {
+	Command_data data = {{"insert", id}, {0, value}};
+	print_info(data);
+
+	bool is_query_correct = check_value(data) 
+							&& check_id(data);
+	if (!is_query_correct) return;
+	
+	if (strsets_container()[id].empty()) {
+		strsets_container()[id].insert(std::string(value));
+	}
+	else {
+		if (!check_set42(data)) {
+			strsets_container()[id].insert(std::string(value));
+		} 
+		else return;
+	}
+	
+	print_result(data, 1);
+}
+
+int strset_test(unsigned long id, const char* value) {
+	Command_data data = {{"test", id}, {0, value}};
+	print_info(data);
+	
+	bool is_query_correct = check_id(data) &&
+							check_value(data);
+	if (!is_query_correct) return 0;
+	
+	int result = strsets_container()[id].count(std::string(value));
+	print_result(data, result);
+	
+	return result;
+}
+
+void strset_remove(unsigned long id, const char* value) {
+	Command_data data = {{"remove", id}, {0, value}};
+	print_info(data);
+	
+	bool is_query_correct = check_value(data) &&
+							check_id(data) && 
+							!check_set42(data);
+							
+	if (!is_query_correct) return;
+	
+	bool result = false;
+	
+	if (strset_test(id, value)) {
+		result = true;
+		strsets_container()[id].erase(std::string(value));
+	} 
+	
+	print_result(data, result);
+}
+
+void strset_clear(unsigned long id) {
+	Command_data data = {{"clear", id}, {0, nullptr}};
+	print_info(data);
+	
+	bool is_query_correct = check_id(data) && 
+							!check_set42(data);
+	if (!is_query_correct) return;
+	
+	strsets_container()[id].clear();
+	
+	print_result(data, 1);
+}
+
+int strset_comp(unsigned long id1, unsigned long id2) {
+	Command_data data = {{"comp", id1}, {id2, nullptr}};
+	print_info(data);
+
+	Strset strset1, strset2;
+	
+	if (strset_exist(id1)) strset1 = strsets_container()[id1];
+	if (strset_exist(id2)) strset2 = strsets_container()[id2];
+
+	int result = 0;
+	if (strset1 < strset2) result = -1;
+	else if (strset1 > strset2) result = 1;
+	
+	print_result(data, result);
+	check_id(data);
+	std::swap(data.first.second, data.second.first);
+	check_id(data);
+
+	return result;
+}
+
+
+} // namespace
