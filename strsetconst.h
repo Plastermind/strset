@@ -6,11 +6,11 @@ namespace jnp1 {
 extern "C" {
 #endif // __cplusplus
 
-    unsigned long strset42();
+unsigned long strset42();
 
 #ifdef __cplusplus
 }
-}
+} // namespace jnp1
 #endif // __cplusplus
 
 #endif // _STRSETCONST_H_
