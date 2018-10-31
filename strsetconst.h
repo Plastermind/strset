@@ -6,7 +6,7 @@ namespace jnp1 {
 extern "C" {
 #endif // __cplusplus
 
-unsigned long strset42();
+    unsigned long strset42();
 
 #ifdef __cplusplus
 }

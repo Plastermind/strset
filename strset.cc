@@ -2,6 +2,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <cstdarg>
 
 #include "strsetconst.h"
 #include "strset.h"
@@ -11,165 +12,182 @@
 #else
     const bool debug = false;
 #endif
-
+    
 namespace jnp1 {
 
-
-using Strset = std::set<std::string>;
-using StrsetsContainer = std::vector<Strset>;
-using IdsOccupation = std::vector<bool>;
-using Strset_id = unsigned long;
-using Command_name = std::string;
-using Value = const char*;
-using Command_data = std::pair<std::pair<Command_name, Strset_id>,
-                std::pair<Strset_id, Value>>;
+    using Strset = std::set<std::string>;
+    using Strsets_container = std::vector<Strset>;
+    using Ids_occupation = std::vector<bool>;
+    using Strset_id = unsigned long;
 
 namespace {
+    enum Command_type {NEW, DELETE, INSERT, REMOVE, TEST, SIZE, CLEAR, COMP};
+    
     unsigned long strsets_number;
 
-    StrsetsContainer& strsets_container() {
-        static StrsetsContainer strsets_container;
+    std::string get_command_name(Command_type type) {
+        static std::string names[] = 
+        {"new", "delete", "insert", "remove", "test", "size", "clear", "comp"};
+        
+        return names[type];
+    }
+    
+    // Meyer's singletons to prevent static initialization order problem
+    Strsets_container& strsets_container() {
+        static Strsets_container strsets_container;
         return strsets_container;
     }
-    IdsOccupation& ids_occupation() {
-        static IdsOccupation ids_occupation;
+    
+    Ids_occupation& ids_occupation() {
+        static Ids_occupation ids_occupation;
         return ids_occupation;
     }
-
+    
     void initialize_stream() {
         std::ios_base::Init();
     }
-
+    
     bool strset_exist(unsigned long id) {
         return strsets_number >= id && ids_occupation()[id];
     }
 
-    void print_info(Command_data data) {
+    // prints on diagnostic output name of the command and values    of its arguments
+    void print_info(Command_type type, ...) {
         if (!debug) return;
 
-        auto name = data.first.first;
-        auto id1 = data.first.second;
-        auto id2 = data.second.first;
-        auto value = data.second.second;
-
-        std::string info = "strset_" + name + "(";
-
-        if (name == "delete" || name == "size" || name == "clear") {
-            info += std::to_string(id1);
+        va_list args;
+        va_start(args, type);
+        
+        std::string info = "strset_" + get_command_name(type) + "(";
+        const char* value;
+        
+        switch (type) {
+            case DELETE:
+            case SIZE: 
+            case CLEAR: 
+                info += std::to_string(va_arg(args, Strset_id));
+                break;
+            case INSERT:
+            case REMOVE:
+            case TEST:
+                info += std::to_string(va_arg(args, Strset_id)) + ", ";
+                value = va_arg(args, const char*);
+                info += (value == nullptr ? "NULL" : "\"" + std::string(value) + "\"");
+                break;
+            case COMP:
+                info += std::to_string(va_arg(args, Strset_id)) + ", ";
+                info += std::to_string(va_arg(args, Strset_id));
+                break;
+            case NEW:
+                break;
         }
-        else if (name == "insert" || name == "remove" || name == "test") {
-            info += std::to_string(id1) + ", " +
-                (value == nullptr ? "NULL" : "\"" + std::string(value) + "\"");
-        }
-        else if (name == "comp") {
-            info += std::to_string(id1) + ", " + std::to_string(id2);
-        }
-
         info += ")";
+        
+        va_end(args);
 
         initialize_stream();
         std::cerr << info << std::endl;
     }
 
-    void print_result(Command_data command_data, int result) {
+    // pritnts on diagnostic output outcome of the command
+    void print_result(Command_type type, ...) {
         if (!debug) return;
+        
+        va_list args;
+        va_start(args, type);
+        
+        std::string info = "strset_" + get_command_name(type) + ": ";
 
-        auto name = command_data.first.first;
-        auto id1 = command_data.first.second;
-        auto id2 = command_data.second.first;
-        auto value = command_data.second.second;
-
-        std::string set1_name =
-            (id1 && id1 == jnp1::strset42() ? "the 42 Set" : "set " + std::to_string(id1));
-        std::string set2_name =
-            (id2 && id2 == jnp1::strset42() ? "the 42 Set" : "set " + std::to_string(id2));
-        std::string info = "strset_" + name + ": ";
-
-        if (name == "new") {
-            info += "set " + std::to_string(result) + " created";
+        switch (type) {
+            case NEW: 
+                info += "set " + std::to_string(va_arg(args, int)) + " created";
+                break;
+            case DELETE: 
+                info += "set " + std::to_string(va_arg(args, int)) + " deleted";
+                break;
+            case INSERT:
+                info += "element \"" + std::string(va_arg(args, char*)) + "\" ";
+                info += (va_arg(args, int) ? "inserted" : "was already present");
+                break;
+            case REMOVE: 
+                info += "element " + std::string(va_arg(args, char*)) + " ";
+                info += (va_arg(args, int) ? "removed" : "was not present");
+                break;
+            case SIZE:
+                info += "set " + std::to_string(va_arg(args, Strset_id)) + " contains ";
+                info += std::to_string(va_arg(args, int)) + " element(s)";
+                break;
+            case TEST:
+                info += "set " + std::to_string(va_arg(args, int)) + " ";
+                info += (va_arg(args, int) ? "contains" : "does not contain");
+                info += " the element \"" + std::string(va_arg(args, char*)) + "\"";
+                break;
+            case CLEAR:
+                info += "set " + std::to_string(va_arg(args, Strset_id)) + " cleared";
+                break;
+            case COMP:
+                info += "result of comparing set " + std::to_string(va_arg(args, int));
+                info += " to set " + std::to_string(va_arg(args, int));
+                info += " is " + std::to_string(va_arg(args, int));
+                break;
         }
-        else if (name == "delete") {
-            info += "set " + std::to_string(result) + " deleted";
-        }
-        else if (name == "insert") {
-            info += "element \"" + std::string(value) + "\" ";
-            info += (result ? "inserted" : "was already present");
-        }
-        else if (name == "remove") {
-            info += "element " + std::string(value) + " ";
-            info += (result ? "removed" : "was not present");
-        }
-        else if (name == "size") {
-            info += set1_name + " contains ";
-            info += std::to_string(result) + " element(s)";
-        }
-        else if (name == "test") {
-            info += set1_name + " ";
-            info += (result ? "contains" : "does not contain");
-            info += " the element \"" + std::string(value) + "\"";
-        }
-        else if (name == "clear") {
-            info += set1_name + " cleared";
-        }
-        else if (name == "comp") {
-            info += "result of comparing " + set1_name + " to " + set2_name
-                 + " is " + std::to_string(result);
-        }
-
+        
+        va_end(args);
+        
         initialize_stream();
         std::cerr << info << std::endl;
     }
 
-    bool check_id(Command_data command_data) {
-        auto command_name = command_data.first.first;
-        auto id = command_data.first.second;
-
+    // checks if id is valid and prints error if necessary 
+    bool check_id(Command_type type, Strset_id id) {
         bool result = strset_exist(id);
 
-        if (!result) {
+        if (!result && debug) {
             initialize_stream();
-            std::string error = "strset_" + command_name + ": set " + std::to_string(id)
-                                + " does not exist";
+            std::string error = "strset_" + get_command_name(type) + ": set " 
+                                + std::to_string(id) + " does not exist";
             std::cerr << error << std::endl;
         }
 
         return result;
     }
-
-    bool check_value(Command_data command_data) {
-        std::string command_name = command_data.first.first;
-        const char* value = command_data.second.second;
-
+    
+    // checks if value is valid and prints error if necessary
+    bool check_value(Command_type type, const char* value) {
         bool result = value != nullptr;
 
-        if (!result) {
+        if (!result && debug) {
             initialize_stream();
-            std::string error = "strset_" + command_name + ": invalid value (NULL)";
+            std::string error = "strset_" + get_command_name(type)
+                            + ": invalid value (NULL)";
             std::cerr << error << std::endl;
-        }
-
+        } 
         return result;
     }
 
-    bool check_set42(Command_data command_data) {
-        auto command_name = command_data.first.first;
-        auto id = command_data.first.second;
-
+    // checks if the given set is The 42 Set and prints error if necessary
+    bool check_set42(Command_type type, Strset_id id) {
         if (id == jnp1::strset42()) {
             if (debug) {
-                std::string error = "strset_" + command_name + ": attempt to ";
-                if (command_name == "insert") {
+                std::string error = "strset_" + get_command_name(type) + ": attempt to ";
+                
+                switch (type) {
+                case INSERT:
                     error += "insert into the 42 set";
-                }
-                else if (command_name == "remove") {
+                    break;
+                case REMOVE:
                     error += "remove element from the 42 set";
-                }
-                else if (command_name == "clear") {
+                    break;
+                case CLEAR:
                     error += "clear the 42 set";
-                }
-                else if (command_name == "delete") {
+                    break;
+                case DELETE:
                     error += "delete the 42 set";
+                    break;
+                default:
+                    break;
                 }
+                
                 initialize_stream();
                 std::cerr << error << std::endl;
             }
@@ -182,8 +200,7 @@ namespace {
 } // namespace
 
 unsigned long strset_new() {
-    Command_data data = {{"new", 0}, {0, nullptr}};
-    print_info(data);
+    print_info(NEW);
 
     ++strsets_number;
     strsets_container().resize(strsets_number + 1);
@@ -191,74 +208,68 @@ unsigned long strset_new() {
 
     ids_occupation().back() = 1;
 
-    print_result(data, 1);
+    print_result(NEW, strsets_number);
     return strsets_number;
 }
 
 void strset_delete(unsigned long id) {
-    Command_data data = {{"delete", id}, {0, nullptr}};
-    print_info(data);
+    print_info(DELETE, id);
 
-    bool is_query_correct = check_id(data) && !check_set42(data);
+    bool is_query_correct = check_id(DELETE, id) && !check_set42(DELETE, id);
 
     if (is_query_correct) {
         ids_occupation()[id] = false;
-        print_result(data, 1);
+        print_result(DELETE, 1);
     }
 }
 
 size_t strset_size(unsigned long id) {
-    Command_data data = {{"size", id}, {0, nullptr}};
-    print_info(data);
+    print_info(SIZE, id);
 
     int result = 0;
     if (strset_exist(id)) result = strsets_container()[id].size();
 
-    print_result(data, result);
+    print_result(SIZE, id, result);
 
     return result;
 }
 
 void strset_insert(unsigned long id, const char* value) {
-    Command_data data = {{"insert", id}, {0, value}};
-    print_info(data);
-
-    bool is_query_correct = check_value(data) && check_id(data);
+    print_info(INSERT, id, value);
+    bool is_query_correct = check_value(INSERT, value) && check_id(INSERT, id);
     if (!is_query_correct) return;
 
     if (strsets_container()[id].empty()) {
         strsets_container()[id].insert(std::string(value));
     }
     else {
-        if (!check_set42(data)) {
+        if (!check_set42(INSERT, id)) {
             strsets_container()[id].insert(std::string(value));
         }
         else return;
     }
 
-    print_result(data, 1);
+    print_result(INSERT, value, 1);
 }
 
 int strset_test(unsigned long id, const char* value) {
-    Command_data data = {{"test", id}, {0, value}};
-    print_info(data);
+    print_info(TEST, id, value);
 
-    bool is_query_correct = check_id(data) && check_value(data);
+    bool is_query_correct = check_id(TEST, id) && check_value(TEST, value);
     if (!is_query_correct) return 0;
 
     int result = strsets_container()[id].count(std::string(value));
-    print_result(data, result);
-
+    print_result(TEST, id, result, value);
+    
     return result;
 }
 
 void strset_remove(unsigned long id, const char* value) {
-    Command_data data = {{"remove", id}, {0, value}};
-    print_info(data);
+    print_info(REMOVE, id, value);
 
-    bool is_query_correct = check_value(data) &&
-                            check_id(data) &&
-                            !check_set42(data);
+    bool is_query_correct = check_value(REMOVE, value) &&
+                            check_id(REMOVE, id) &&
+                            !check_set42(REMOVE, id);
 
     if (!is_query_correct) return;
 
@@ -269,24 +280,22 @@ void strset_remove(unsigned long id, const char* value) {
         strsets_container()[id].erase(std::string(value));
     }
 
-    print_result(data, result);
+    print_result(REMOVE, value, result);
 }
 
 void strset_clear(unsigned long id) {
-    Command_data data = {{"clear", id}, {0, nullptr}};
-    print_info(data);
+    print_info(CLEAR, id);
 
-    bool is_query_correct = check_id(data) && !check_set42(data);
+    bool is_query_correct = check_id(CLEAR, id) && !check_set42(CLEAR, id);
     if (!is_query_correct) return;
 
     strsets_container()[id].clear();
 
-    print_result(data, 1);
+    print_result(CLEAR, id, 1);
 }
 
 int strset_comp(unsigned long id1, unsigned long id2) {
-    Command_data data = {{"comp", id1}, {id2, nullptr}};
-    print_info(data);
+    print_info(COMP, id1, id2);
 
     Strset strset1, strset2;
 
@@ -296,14 +305,12 @@ int strset_comp(unsigned long id1, unsigned long id2) {
     int result = 0;
     if (strset1 < strset2) result = -1;
     else if (strset1 > strset2) result = 1;
-
-    print_result(data, result);
-    check_id(data);
-    std::swap(data.first.second, data.second.first);
-    check_id(data);
+    
+    print_result(COMP, id1, id2, result);
+    check_id(COMP, id1);
+    check_id(COMP, id2);
 
     return result;
 }
 
-
-} // namespace
+} // namespace jnp1
