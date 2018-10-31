@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "strset.h"
+#include "strsetconst.h"
     
 #ifndef NDEBUG 
     const bool debug = true;
@@ -10,43 +11,34 @@
 
 
 // AUXILIARY FUNCTIONS
-
-unsigned long& strset42_id() {
+namespace {
     static unsigned long strset42_id = 0;
-    return strset42_id;
+
+    void print_info() {
+        if (!debug) return;
+        
+        std::ios_base::Init();
+        std::cerr << "strsetconst init invoked" << std::endl;
+    }
+
+    void print_result() {
+        if (!debug) return;
+        
+        std::ios_base::Init();
+        std::cerr << "strsetconst init finished" << std::endl;
+    }
 }
 
-void print_info() {
-    if (!debug) return;
-    
-    std::ios_base::Init();
-    std::cerr << "strsetconst init invoked" << std::endl;
-}
-
-void print_result() {
-    if (!debug) return;
-    
-    std::ios_base::Init();
-    std::cerr << "strsetconst init finished" << std::endl;
-}
-
+// STRSET FUNCTIONS
 namespace jnp1 {
-extern "C" {
-    // STRSET FUNCTIONS
-
-    //Zwraca identyfikator zbioru, którego nie można modyfikować i który zawiera
-    //jeden element: napis "42". Zbiór jest tworzony przy pierwszym wywołaniu tej
-    //funkcji i wtedy zostaje ustalony jego numer.
     unsigned long strset42() {
-        if (!strset42_id()) {
+        if (!strset42_id) {
             print_info();
-            strset42_id() = strset_new();
-            strset_insert(strset42_id(), "42");
+            strset42_id = strset_new();
+            strset_insert(strset42_id, "42");
             print_result();
         }
         
-        return strset42_id();
+        return strset42_id;
     }
-
-}
 }
